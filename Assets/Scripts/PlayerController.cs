@@ -15,10 +15,6 @@ public class PlayerController : MonoBehaviour
 
     private SphereCollider _attackHitBox;
 
-    //State in order of precedence
-    private enum States {Idle, Moving, Attacking}
-    private States state;
-
     [SerializeField]
     private float MoveSpeed = 10.0f;//units per second
     [SerializeField]
@@ -40,33 +36,12 @@ public class PlayerController : MonoBehaviour
         _velocity = Vector3.zero;
         _groundChecker = transform.Find("Ground Checker");
         _ground = 1 << LayerMask.NameToLayer("Ground");
+        _attackHitBox = transform.Find("Attack Hit Box").gameObject.GetComponent<SphereCollider>();
 
-        _attackHitBox = transform.Find("Attack Hit Box").gameObject.GetComponent<SphereCollider>(); ;
+        GetComponent<StateIdle>().enabled = true;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        //======Combat======
-        if (Input.GetButton("Attack"))
-        {
-            Debug.Log("Attack");
-            state = States.Attacking;
-            Attack();
-            //Do not exit until attack animation is done.
-        }
-        //======Movement======
-        //Debug.Log(Input.GetAxis("HorizontalL") + ", " + Input.GetAxis("VerticalL") + ", " + Input.GetAxis("HorizontalR") + ", " + Input.GetAxis("VerticalR"));
-        float inputX = Input.GetAxis("Horizontal");
-        float inputZ = Input.GetAxis("Vertical");
-        //if (Mathf.Abs(inputX) > 0 && Mathf.Abs(inputZ) > 0)
-        //{
-            state = States.Moving;
-            Move(inputX, inputZ);
-        //}
-    }
-
-    private void Move(float inputX, float inputZ)
+    public void Move(float inputX, float inputZ)
     {
         Vector3 move = new Vector3(inputX, 0, inputZ);
         Vector3 rotatedMove = _cameraContainer.rotation * move;
@@ -78,6 +53,10 @@ public class PlayerController : MonoBehaviour
             // Move our position a step closer to the target
             transform.rotation = Quaternion.LookRotation(newDir);
         }
+    }
+
+    public void UpdateGravity()
+    {
         _isGrounded = Physics.CheckSphere(_groundChecker.position, GroundDistance, _ground, QueryTriggerInteraction.Ignore);
         if (_isGrounded && _velocity.y < 0)
         {
@@ -90,8 +69,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Attack()
+    public void StartAttack()
     {
         _attackHitBox.enabled = true;
+    }
+
+    public void StopAttack()
+    {
+        _attackHitBox.enabled = false;
     }
 }
